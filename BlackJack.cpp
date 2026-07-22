@@ -394,12 +394,15 @@ int main(){
         splitChose = true;
         HandOver = false;
         split(currentHand,Current_Deck,j,scores);
+        cout << "Your Cards: "<< hands[CurrentIdx][0].first << hands[CurrentIdx][0].second<< " "<< hands[CurrentIdx][1].first << hands[CurrentIdx][1].second << endl;
+        cout<<"Your Score: "<<scores[CurrentIdx]<<endl;
         amounts.insert(amounts.begin() + CurrentIdx + 1, amount);
     }
     } 
     if(HandOver == true){
         CurrentIdx++;
     } 
+    if(CurrentIdx<hands.size())cout << "Your Cards: "<< hands[CurrentIdx][0].first << hands[CurrentIdx][0].second<< " "<< hands[CurrentIdx][1].first << hands[CurrentIdx][1].second << endl;
 }
     int test_all_busted = 0;
     bool all_busted = false;
@@ -437,7 +440,7 @@ int main(){
     }else{
         for(int i = 0; i<hands.size(); i++){
         hand_score = calculateScore(hands[i]);
-        cout<<"Hand No."<<i<<" "<<"Score: "<<hand_score<<"Result: ";
+        cout<<"Hand No."<<i<<" "<<"Score: "<<hand_score<<" "<<"Result: ";
         declare_result(dealer_score_actual, hand_score, hands[i],dealerHand);
         results.push_back(result);
         }
