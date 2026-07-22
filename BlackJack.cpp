@@ -25,8 +25,8 @@ int surrenders=0;
 void declare_result(int dealer,int user, const vector<pair<string,char>>& userHand, const vector<pair<string,char>>& dealerHand){
     int dealer_score_actual=dealer;
     int user_score=user;
-    cout << "Dealer Score: "<< dealer_score_actual << endl;
-    cout<<"Your Score: "<<user_score<<endl;
+    // cout << "Dealer Score: "<< dealer_score_actual << endl;
+    // cout<<"Your Score: "<<user_score<<endl;
 
     if(dealer_score_actual<=21){
     if(user_score > 21 ) {
@@ -337,12 +337,14 @@ int main(){
     bool splitChose = false;
     bool HandOver = false;
     vector<int> scores(1);
+     int hand_score;
 
     hands.push_back(userHand);
     while (CurrentIdx < hands.size()) {
     vector<pair<string,char>>& currentHand = hands[CurrentIdx];
     scores[CurrentIdx] = calculateScore(currentHand);
     HandOver = false;
+    hand_score = calculateScore(hands[CurrentIdx]);
 
     while(HandOver == false) {
     
@@ -352,21 +354,23 @@ int main(){
 
         pair<string, char> newCard = drawCard(Current_Deck, j);
         currentHand.push_back(newCard);
-        scores[CurrentIdx] = calculateScore(currentHand);
-        if(user_score > 21) HandOver = true;
+        hand_score = calculateScore(currentHand);
+        scores[CurrentIdx] = hand_score;
+        if(hand_score > 21) HandOver = true;
 
         cout << "New Card: " << newCard.first << newCard.second << endl;
-        cout << "Your Score: " << user_score << endl;
+        cout << "Your Score: " << hand_score << endl;
     }else if(choice=='d'){
 
         amount*=2;
 
         pair<string, char> newCard = drawCard(Current_Deck, j);
         currentHand.push_back(newCard);
-        scores[CurrentIdx] = calculateScore(currentHand);
+        hand_score = calculateScore(currentHand);
+        scores[CurrentIdx] = hand_score;
 
         cout << "New Card: " << newCard.first << newCard.second << endl;
-        cout << "Your Score: " << user_score << endl;
+        cout << "Your Score: " <<hand_score << endl;
 
         HandOver = true;
         break;
@@ -392,9 +396,15 @@ int main(){
         CurrentIdx++;
     } 
 }
- 
+    int test_all_busted = 0;
+    bool all_busted = false;
     
-    if(user_score<=21 && roundOver==false){
+    for(int i = 0; i<hands.size(); i++){
+        if(scores[i]>21) test_all_busted++;
+    }
+    if(test_all_busted == hands.size()) all_busted = true;
+    
+    if(all_busted == false && roundOver==false){
     
         while(dealer_score_actual<=16){
         auto card = drawCard(Current_Deck,j);
@@ -412,8 +422,19 @@ int main(){
     cout<<endl;
 
     //wallet refresh and wins/losses
+    cout << "Dealer Score: "<< dealer_score_actual << endl;
 
-    if(roundOver == false) declare_result(dealer_score_actual, user_score, userHand,dealerHand);
+    if(CurrentIdx == 1){
+        cout<<"Your Score: "<<scores[0]<<endl;
+        declare_result(dealer_score_actual, scores[0], hands[0],dealerHand);
+    }else{
+        for(int i = 0; i<hands.size(); i++){
+        hand_score = calculateScore(hands[i]);
+        cout<<"Hand No."<<i<<" "<<"Score: "<<hand_score<<"Result: ";
+        declare_result(dealer_score_actual, hand_score, hands[i],dealerHand);
+        }
+        cout<<endl;
+    }
 
     gameNumber++;
 
