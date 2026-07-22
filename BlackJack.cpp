@@ -402,8 +402,11 @@ int main(){
     if(HandOver == true){
         CurrentIdx++;
     } 
-    if(CurrentIdx<hands.size())cout << "Your Cards: "<< hands[CurrentIdx][0].first << hands[CurrentIdx][0].second<< " "<< hands[CurrentIdx][1].first << hands[CurrentIdx][1].second << endl;
-}
+    if(CurrentIdx<hands.size()){
+        cout << "Your Cards: "<< hands[CurrentIdx][0].first << hands[CurrentIdx][0].second<< " "<< hands[CurrentIdx][1].first << hands[CurrentIdx][1].second << endl;
+        cout<<"Score: "<<calculateScore(currentHand)<<endl;
+    }
+    }
     int test_all_busted = 0;
     bool all_busted = false;
 
