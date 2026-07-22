@@ -18,40 +18,38 @@ int losses=0;
 int ties=0;
 float total;
 int gameNumber = 0;
-int insurance=0;
+float insurance=0;
 int insurances=0;
 int surrenders=0;
 
 void declare_result(int dealer,int user, const vector<pair<string,char>>& userHand, const vector<pair<string,char>>& dealerHand){
     int dealer_score_actual=dealer;
     int user_score=user;
-    // cout << "Dealer Score: "<< dealer_score_actual << endl;
-    // cout<<"Your Score: "<<user_score<<endl;
 
-    if(dealer_score_actual<=21){
-    if(user_score > 21 ) {
-        cout << "You Lose, busted!"<<endl;
-        result=-1;
+    if (user_score > 21) {
+        cout << "You Lose, busted!" << endl;
+        result = -1;
         losses++;
     }
-    else if(user_score > dealer_score_actual) {
-        cout << "You Win!"<<endl;
-        result=1;
+    else if (dealer_score_actual > 21) {
+        cout << "You Win, Dealer Busted!" << endl;
+        result = 1;
         wins++;
     }
-    else if(user_score < dealer_score_actual) {
-        cout << "You Lose!"<<endl;
-        result=-1;
+    else if (user_score > dealer_score_actual) {
+        cout << "You Win!" << endl;
+        result = 1;
+        wins++;
+    }
+    else if (user_score < dealer_score_actual) {
+        cout << "You Lose!" << endl;
+        result = -1;
         losses++;
-    }else if(user_score == dealer_score_actual){
-        cout<<"Push"<<endl;
-        result =0;
+    }
+    else {
+        cout << "Push" << endl;
+        result = 0;
         ties++;
-    }
-    }else if(dealer_score_actual>21){
-        cout<<"You Win, Dealer Busted!"<<endl;
-        result=1;
-        wins++;
     }
 }
 
@@ -96,6 +94,7 @@ char choice_fcn(const vector<pair<string,char>>& Hand, float amount,float total)
     bool pairCards = (m == 2 && Hand[0].second == Hand[1].second);
     bool dd_avail = (m == 2 && 2 * amount <= total);
     bool surrender_avail = (Hand.size() == 2);
+    bool split_avail = (total >= amount*2);
 
     cout << "\nPress 'h' to HIT or 's' to STAND";
 
@@ -117,7 +116,7 @@ char choice_fcn(const vector<pair<string,char>>& Hand, float amount,float total)
     while(
         choice != 'h' &&
         choice != 's' &&
-        !(choice == 'f' && pairCards) &&
+        !(choice == 'f' && pairCards && split_avail) &&
         !(choice == 'd' && dd_avail) &&
         !(choice=='q' && surrender_avail)
     ) {
@@ -128,7 +127,7 @@ char choice_fcn(const vector<pair<string,char>>& Hand, float amount,float total)
     return choice;
 }
 
-int bet(float& amount, int result, float total) {
+float bet(float& amount, int result, float total) {
     if(result == 1) total += amount;
     else if(result == -1) total -= amount;
     else if(result == 2 ) total += (amount * 3) / 2;
@@ -174,7 +173,7 @@ int main(){
 
     {
     ifstream walletIn("wallet.txt");
-    if (!(walletIn >> total >> wins >> losses >> ties >> gameNumber >> insurances)) {
+    if (!(walletIn >> total >> wins >> losses >> ties >> gameNumber >> insurances >> surrenders)) {
         total=1000;
         wins=0;
         losses=0;
@@ -297,25 +296,25 @@ int main(){
     bool dealerBJ = (dealer_score_actual == 21 && dealerHand.size() == 2);
     bool userBJ   = (user_score == 21 && userHand.size() == 2);
 
-    if(dealerBJ) {
+    vector<int> results;
 
+    if(dealerBJ) {
     if(userBJ) {
-        cout << "Push" << endl;
+    cout << "Push" << endl;
         ties++;
         result = 0;
+        results.push_back(0);
     }
     else {
         cout << "You Lose!" << endl;
         losses++;
         result = -1;
+        results.push_back(-1);
     }
-
-    if(ins_avail) {
-        total+=2*insurance;
+    if (ins_avail) {
+    total += 2 * insurance;
     }
-
-    // resolve hand
-    roundOver = true;
+        roundOver = true;
     }
     else {
 
@@ -329,6 +328,7 @@ int main(){
     cout << "Blackjack! You Win!\n";
     result = 2;
     wins++;
+    results.push_back(2);
     roundOver = true;
     }
     
@@ -337,12 +337,15 @@ int main(){
     bool splitChose = false;
     bool HandOver = false;
     vector<int> scores(1);
-     int hand_score;
+    int hand_score;
+    vector<float> amounts(1);
 
     hands.push_back(userHand);
-    while (CurrentIdx < hands.size()) {
+    while (CurrentIdx < hands.size() && !roundOver) {
+
     vector<pair<string,char>>& currentHand = hands[CurrentIdx];
     scores[CurrentIdx] = calculateScore(currentHand);
+    amounts[CurrentIdx] = amount;
     HandOver = false;
     hand_score = calculateScore(hands[CurrentIdx]);
 
@@ -362,7 +365,7 @@ int main(){
         cout << "Your Score: " << hand_score << endl;
     }else if(choice=='d'){
 
-        amount*=2;
+        amounts[CurrentIdx] = amount*2;
 
         pair<string, char> newCard = drawCard(Current_Deck, j);
         currentHand.push_back(newCard);
@@ -384,12 +387,14 @@ int main(){
     surrenders++;
     roundOver = true;
     HandOver = true;
+    results.push_back(-2);
     break;
 
     }else if(choice=='f'){
         splitChose = true;
         HandOver = false;
         split(currentHand,Current_Deck,j,scores);
+        amounts.insert(amounts.begin() + CurrentIdx + 1, amount);
     }
     } 
     if(HandOver == true){
@@ -398,7 +403,7 @@ int main(){
 }
     int test_all_busted = 0;
     bool all_busted = false;
-    
+
     for(int i = 0; i<hands.size(); i++){
         if(scores[i]>21) test_all_busted++;
     }
@@ -424,21 +429,27 @@ int main(){
     //wallet refresh and wins/losses
     cout << "Dealer Score: "<< dealer_score_actual << endl;
 
+    if(!roundOver){
     if(CurrentIdx == 1){
         cout<<"Your Score: "<<scores[0]<<endl;
         declare_result(dealer_score_actual, scores[0], hands[0],dealerHand);
+        results.push_back(result);
     }else{
         for(int i = 0; i<hands.size(); i++){
         hand_score = calculateScore(hands[i]);
         cout<<"Hand No."<<i<<" "<<"Score: "<<hand_score<<"Result: ";
         declare_result(dealer_score_actual, hand_score, hands[i],dealerHand);
+        results.push_back(result);
         }
         cout<<endl;
+        }
     }
 
     gameNumber++;
 
-    total = bet(amount, result, total);
+    for (int i = 0; i < hands.size(); i++) {
+        total = bet(amounts[i], results[i], total);
+    }
 
     if(total <= 0){
     cout << "You are out of money! Wallet has been reset to 1000.\n";
